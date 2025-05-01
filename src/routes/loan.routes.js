@@ -65,8 +65,20 @@ router.post('/apply', authMiddleware, async (req, res) => {
 });
 
 router.get('/my-loans', authMiddleware, async (req, res) => {
-  const loans = await Loan.find({ userId: req.user.id });
-  res.json(loans);
+  try {
+    const loans = await Loan.find({ userId: req.user.id })
+      .sort({ createdAt: -1 }); // Newest first
+    
+    res.json(loans);
+  } catch (err) {
+    console.error('Error fetching loans:', err);
+    res.status(500).json({ 
+      error: 'Failed to fetch loans',
+      message: err.message 
+    });
+  }
 });
+
+
 
 module.exports = router;
