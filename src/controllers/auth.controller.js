@@ -43,12 +43,24 @@ const login = async (req, res) => {
 
   const user = await User.findOne({ email });
 
+  // Check if the user exists and the password is correct
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
-  const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET);
-  res.json({ token });
+  // Generate the JWT token
+  const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+  // Send the response with both token and user data
+  res.json({
+    token: token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    }
+  });
 };
 
 module.exports = { signUp, login };
