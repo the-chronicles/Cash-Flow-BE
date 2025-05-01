@@ -8,24 +8,30 @@ const fs = require('fs');
 
 router.post('/apply', authMiddleware, async (req, res) => {
   try {
-    const {
-      loanType,
-      amount,
-      paymentFrequency,
-      installments,
-      purpose,
-      employment,
-      income,
-      payFrequency,
-      nextPayDate,
-      hasDirectDeposit,
-      socialSecurityNumber,
-      idType,
-      accountType,
-      routingNumber,
-      accountNumber
-    } = req.body;
+    // Define required fields
+    const requiredFields = [
+      'loanType', 
+      'amount', 
+      'paymentFrequency', 
+      'installments',
+      'purpose', 
+      'employment', 
+      'income', 
+      'payFrequency',
+      'nextPayDate', 
+      'hasDirectDeposit'
+    ];
 
+    // Check for missing fields
+    const missingFields = requiredFields.filter(field => !(field in req.body));
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        missingFields
+      });
+    }
+
+    // Process file upload
     const file = req.files?.document;
     let idDocumentPath = '';
 
@@ -38,42 +44,25 @@ router.post('/apply', authMiddleware, async (req, res) => {
       await file.mv(path.join(__dirname, `../${idDocumentPath}`));
     }
 
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        error: 'Missing required fields',
-        missingFields
-      });
-    }
-
+    // Create loan
     const loan = await Loan.create({
-      loanType,
-      amount,
-      paymentFrequency,
-      installments,
-      purpose,
-      employment,
-      income,
-      payFrequency,
-      nextPayDate: new Date(nextPayDate),
-      hasDirectDeposit,
-      socialSecurityNumber,
-      idType,
+      ...req.body,
       idDocumentPath,
-      accountType,
-      routingNumber,
-      accountNumber,
       userId: req.user.id,
-      interestRate: 8.9 // Default interest rate
+      status: 'pending',
+      interestRate: 8.9
     });
 
     res.status(201).json(loan);
   } catch (err) {
-    console.error(err);
-    res.status(400).json({ error: 'Loan application failed', details: err.message });
+    console.error('Loan application error:', err);
+    res.status(400).json({ 
+      error: 'Loan application failed',
+      message: err.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
   }
 });
-  
 
 router.get('/my-loans', authMiddleware, async (req, res) => {
   const loans = await Loan.find({ userId: req.user.id });
