@@ -38,6 +38,14 @@ router.post('/apply', authMiddleware, async (req, res) => {
       await file.mv(path.join(__dirname, `../${idDocumentPath}`));
     }
 
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        missingFields
+      });
+    }
+
     const loan = await Loan.create({
       loanType,
       amount,
