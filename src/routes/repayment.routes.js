@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../utils/auth.middleware");
 const repaymentController = require("../controllers/repayment.controller");
+const Loan = require("../models/loan.model");
+const Repayment = require("../models/repayment.model");
+
 
 router.post(
   "/generate",
