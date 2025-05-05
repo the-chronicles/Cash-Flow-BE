@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const loanSchema = new mongoose.Schema({
   loanType: {
@@ -69,5 +70,7 @@ const loanSchema = new mongoose.Schema({
     required: true
   }
 }, { timestamps: true });
+
+loanSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model("Loan", loanSchema);

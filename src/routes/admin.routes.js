@@ -4,6 +4,33 @@ const authMiddleware = require('../utils/auth.middleware');
 const Loan = require('../models/loan.model');
 const User = require('../models/user.model');
 const Repayment = require('../models/repayment.model');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const Admin = require('../models/admin.model'); // Add this at the top
+
+// Admin Login Route (from DB)
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  const admin = await Admin.findOne({ email });
+  if (!admin) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const isMatch = await bcrypt.compare(password, admin.passwordHash);
+  if (!isMatch) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const token = jwt.sign(
+    { email: admin.email, role: 'admin' },
+    process.env.JWT_SECRET,
+    { expiresIn: '1d' }
+  );
+
+  res.json({ token, role: 'admin' });
+});
+
 
 router.use(authMiddleware);  // Apply authentication middleware to all routes
 
@@ -57,5 +84,96 @@ router.get('/users', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve users' });
   }
 });
+
+// Get paginated loan applications with filters
+// router.get('/loan-applications', async (req, res) => {
+//   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+//   try {
+//     const { page = 1, limit = 10, status, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+//     const query = {};
+//     if (status) query.status = status;
+
+//     const options = {
+//       page: parseInt(page),
+//       limit: parseInt(limit),
+//       sort: { [sortBy]: sortOrder === 'asc' ? 1 : -1 },
+//       populate: 'userId'
+//     };
+
+//     const result = await Loan.paginate(query, options);
+    
+//     res.json({
+//       data: result.docs,
+//       total: result.totalDocs,
+//       page: result.page,
+//       limit: result.limit,
+//       totalPages: result.totalPages
+//     });
+//   } catch (err) {
+//     res.status(500).json({ error: 'Failed to fetch loan applications' });
+//   }
+// });
+
+// // Get loan application details
+// router.get('/loan-applications/:id', async (req, res) => {
+//   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+//   try {
+//     const loan = await Loan.findById(req.params.id).populate('userId');
+//     if (!loan) return res.status(404).json({ error: 'Loan not found' });
+//     res.json(loan);
+//   } catch (err) {
+//     res.status(500).json({ error: 'Failed to fetch loan details' });
+//   }
+// });
+
+
+
+// Get paginated loan applications with filters
+router.get('/loan-applications', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+  try {
+    const { page = 1, limit = 10, status, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+    const query = {};
+    if (status) query.status = status;
+
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sort: { [sortBy]: sortOrder === 'asc' ? 1 : -1 },
+      populate: 'userId'
+    };
+
+    const result = await Loan.paginate(query, options);
+    
+    res.json({
+      data: result.docs,
+      total: result.totalDocs,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch loan applications' });
+  }
+});
+
+// Get loan application details
+router.get('/loan-applications/:id', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+  try {
+    const loan = await Loan.findById(req.params.id).populate('userId');
+    if (!loan) return res.status(404).json({ error: 'Loan not found' });
+    res.json(loan);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch loan details' });
+  }
+});
+
 
 module.exports = router;
