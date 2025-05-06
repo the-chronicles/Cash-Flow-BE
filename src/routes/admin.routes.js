@@ -42,34 +42,88 @@ router.get('/loans', async (req, res) => {
 });
 
 // Route to update loan status
+// router.patch('/loan/:id/status', async (req, res) => {
+//   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+//   const { status } = req.body;
+//   const loan = await Loan.findById(req.params.id);
+//   if (!loan) return res.status(404).json({ error: 'Loan not found' });
+//   loan.status = status;
+//   await loan.save();
+
+//   // Automatically generate repayment schedule if approved
+//   if (status === 'approved') {
+//     const numberOfInstallments = 6;
+//     const installmentAmount = loan.amount / numberOfInstallments;
+
+//     const repayments = [];
+//     for (let i = 1; i <= numberOfInstallments; i++) {
+//       const dueDate = new Date();
+//       dueDate.setMonth(dueDate.getMonth() + i);
+//       repayments.push({
+//         loanId: loan._id,
+//         amountPaid: installmentAmount,
+//         dueDate,
+//       });
+//     }
+
+//     await Repayment.insertMany(repayments);
+//   }
+
+//   res.json(loan);
+// });
+
+// Route to update loan status
 router.patch('/loan/:id/status', async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-  const { status } = req.body;
-  const loan = await Loan.findById(req.params.id);
-  if (!loan) return res.status(404).json({ error: 'Loan not found' });
-  loan.status = status;
-  await loan.save();
+  
+  const { status, notes } = req.body;
+  
+  try {
+    const loan = await Loan.findById(req.params.id).populate('userId');
+    if (!loan) return res.status(404).json({ error: 'Loan not found' });
+    
+    // Update loan status and notes
+    loan.status = status;
+    if (notes) loan.notes = notes;
+    await loan.save();
 
-  // Automatically generate repayment schedule if approved
-  if (status === 'approved') {
-    const numberOfInstallments = 6;
-    const installmentAmount = loan.amount / numberOfInstallments;
+    // Automatically generate repayment schedule if approved
+    if (status === 'approved') {
+      const numberOfInstallments = loan.term; // Use the loan term from application
+      const installmentAmount = loan.amount / numberOfInstallments;
 
-    const repayments = [];
-    for (let i = 1; i <= numberOfInstallments; i++) {
-      const dueDate = new Date();
-      dueDate.setMonth(dueDate.getMonth() + i);
-      repayments.push({
-        loanId: loan._id,
-        amountPaid: installmentAmount,
-        dueDate,
+      const repayments = [];
+      for (let i = 1; i <= numberOfInstallments; i++) {
+        const dueDate = new Date();
+        dueDate.setMonth(dueDate.getMonth() + i);
+        repayments.push({
+          loanId: loan._id,
+          userId: loan.userId._id,
+          amount: installmentAmount,
+          dueDate,
+          status: 'pending'
+        });
+      }
+
+      await Repayment.insertMany(repayments);
+      
+      // Update user's loan status
+      await User.findByIdAndUpdate(loan.userId._id, {
+        $push: { loans: loan._id }
       });
     }
 
-    await Repayment.insertMany(repayments);
+    // Prepare response with updated loan and user info
+    const updatedLoan = await Loan.findById(req.params.id).populate('userId');
+    
+    // Emit real-time update (if using websockets)
+    // io.to(loan.userId._id.toString()).emit('loanUpdate', updatedLoan);
+    
+    res.json(updatedLoan);
+  } catch (err) {
+    console.error('Error updating loan status:', err);
+    res.status(500).json({ error: 'Failed to update loan status' });
   }
-
-  res.json(loan);
 });
 
 // Route to get all users (for admin purposes)
