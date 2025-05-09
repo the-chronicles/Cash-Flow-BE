@@ -140,52 +140,6 @@ router.get('/users', async (req, res) => {
 });
 
 // Get paginated loan applications with filters
-// router.get('/loan-applications', async (req, res) => {
-//   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-
-//   try {
-//     const { page = 1, limit = 10, status, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-
-//     const query = {};
-//     if (status) query.status = status;
-
-//     const options = {
-//       page: parseInt(page),
-//       limit: parseInt(limit),
-//       sort: { [sortBy]: sortOrder === 'asc' ? 1 : -1 },
-//       populate: 'userId'
-//     };
-
-//     const result = await Loan.paginate(query, options);
-    
-//     res.json({
-//       data: result.docs,
-//       total: result.totalDocs,
-//       page: result.page,
-//       limit: result.limit,
-//       totalPages: result.totalPages
-//     });
-//   } catch (err) {
-//     res.status(500).json({ error: 'Failed to fetch loan applications' });
-//   }
-// });
-
-// // Get loan application details
-// router.get('/loan-applications/:id', async (req, res) => {
-//   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-
-//   try {
-//     const loan = await Loan.findById(req.params.id).populate('userId');
-//     if (!loan) return res.status(404).json({ error: 'Loan not found' });
-//     res.json(loan);
-//   } catch (err) {
-//     res.status(500).json({ error: 'Failed to fetch loan details' });
-//   }
-// });
-
-
-
-// Get paginated loan applications with filters
 router.get('/loan-applications', async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
 
@@ -217,17 +171,38 @@ router.get('/loan-applications', async (req, res) => {
 });
 
 // Get loan application details
+// router.get('/loan-applications/:id', async (req, res) => {
+//   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+//   try {
+//     const loan = await Loan.findById(req.params.id).populate('userId');
+//     if (!loan) return res.status(404).json({ error: 'Loan not found' });
+//     res.json(loan);
+//   } catch (err) {
+//     res.status(500).json({ error: 'Failed to fetch loan details' });
+//   }
+// });
+
 router.get('/loan-applications/:id', async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
 
   try {
     const loan = await Loan.findById(req.params.id).populate('userId');
     if (!loan) return res.status(404).json({ error: 'Loan not found' });
-    res.json(loan);
+
+    // Create a plain object and add idDocumentUrl
+    const loanObject = loan.toObject();
+    if (loanObject.idDocumentPath) {
+      loanObject.idDocumentUrl = `${req.protocol}://${req.get('host')}/${loanObject.idDocumentPath}`;
+    }
+
+    res.json(loanObject);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch loan details' });
   }
 });
+
+
 
 
 module.exports = router;

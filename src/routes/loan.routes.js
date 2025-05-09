@@ -32,17 +32,22 @@ router.post('/apply', authMiddleware, async (req, res) => {
     }
 
     // Process file upload
-    const file = req.files?.document;
-    let idDocumentPath = '';
+    // Process file upload
+const file = req.files?.document;
+let idDocumentPath = '';
 
-    if (file) {
-      const uploadDir = path.join(__dirname, '../uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      idDocumentPath = `uploads/${Date.now()}_${file.name}`;
-      await file.mv(path.join(__dirname, `../${idDocumentPath}`));
-    }
+if (file) {
+  // Store in root-level /uploads folder (one level above /src)
+  const uploadDir = path.join(__dirname, '../uploads'); // src/uploads
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const fileName = `${Date.now()}_${file.name}`;
+  idDocumentPath = `/uploads/${fileName}`; // Public-facing URL
+  await file.mv(path.join(uploadDir, fileName));
+}
+
 
     // Create loan
     const loan = await Loan.create({
