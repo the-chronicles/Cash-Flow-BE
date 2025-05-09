@@ -16,14 +16,18 @@ dotenv.config();
 const app = express();
 
 // 🔒 Ensure /src/uploads exists
-const uploadsDir = path.join(__dirname, 'src/uploads');
+const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 app.use(cors());
 app.use(express.json());
-app.use(fileUpload());
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: '/tmp/'  // or any folder you prefer
+}));
+
 
 // ✅ Serve static files from the correct uploads directory
 app.use('/uploads', express.static(uploadsDir));

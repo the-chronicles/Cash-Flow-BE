@@ -193,7 +193,7 @@ router.get('/loan-applications/:id', async (req, res) => {
     // Create a plain object and add idDocumentUrl
     const loanObject = loan.toObject();
     if (loanObject.idDocumentPath) {
-      loanObject.idDocumentUrl = `${req.protocol}://${req.get('host')}/${loanObject.idDocumentPath}`;
+      loanObject.idDocumentUrl = loanObject.idDocumentPath;
     }
 
     res.json(loanObject);

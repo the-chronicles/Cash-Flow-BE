@@ -57,7 +57,6 @@ const loanSchema = new mongoose.Schema({
     type: Boolean,
     required: true
   },
-  // Optional fields
   socialSecurityNumber: String,
   idType: String,
   idDocumentPath: String,
