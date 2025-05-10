@@ -29,4 +29,15 @@ router.get("/my-repayments", authMiddleware, async (req, res) => {
   }
 });
 
+router.patch('/repayment/:id/pay', authMiddleware, async (req, res) => {
+  const repayment = await Repayment.findById(req.params.id);
+  if (!repayment) return res.status(404).json({ error: 'Not found' });
+
+  repayment.status = 'paid';
+  await repayment.save();
+
+  res.json(repayment);
+});
+
+
 module.exports = router;
