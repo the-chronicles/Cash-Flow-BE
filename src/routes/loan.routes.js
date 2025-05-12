@@ -82,18 +82,21 @@ router.get("/my-loans", authMiddleware, async (req, res) => {
   }
 });
 
-// Get specific loan by ID for the logged-in user
+// This must be AFTER all more specific GET routes (like '/my-loans')
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const loan = await Loan.findOne({ _id: req.params.id, userId: req.user.id });
     if (!loan) return res.status(404).json({ error: 'Loan not found' });
 
     res.json(loan);
+        console.log('Fetching loan for user:', req.user.id, 'Loan ID:', req.params.id);
+
   } catch (err) {
     console.error('Error fetching loan by ID:', err);
     res.status(500).json({ error: 'Failed to fetch loan details' });
   }
 });
+
 
 
 module.exports = router;

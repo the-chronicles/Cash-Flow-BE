@@ -170,18 +170,6 @@ router.get('/loan-applications', async (req, res) => {
   }
 });
 
-// Get loan application details
-// router.get('/loan-applications/:id', async (req, res) => {
-//   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-
-//   try {
-//     const loan = await Loan.findById(req.params.id).populate('userId');
-//     if (!loan) return res.status(404).json({ error: 'Loan not found' });
-//     res.json(loan);
-//   } catch (err) {
-//     res.status(500).json({ error: 'Failed to fetch loan details' });
-//   }
-// });
 
 router.get('/loan-applications/:id', async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
@@ -201,8 +189,5 @@ router.get('/loan-applications/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch loan details' });
   }
 });
-
-
-
 
 module.exports = router;
