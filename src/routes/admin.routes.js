@@ -190,4 +190,23 @@ router.get('/loan-applications/:id', async (req, res) => {
   }
 });
 
+router.patch('/loan/:id/interest-rate', authMiddleware, async (req, res) => {
+  try {
+    const { interestRate } = req.body;
+    const updated = await Loan.findByIdAndUpdate(
+      req.params.id,
+      { interestRate },
+      { new: true }
+    ).populate('userId');
+    
+    if (!updated) return res.status(404).json({ error: 'Loan not found' });
+
+    res.json(updated);
+  } catch (err) {
+    console.error('Error updating interest rate:', err);
+    res.status(500).json({ error: 'Failed to update interest rate' });
+  }
+});
+
+
 module.exports = router;
