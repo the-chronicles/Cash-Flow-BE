@@ -37,7 +37,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/loan", loanRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/repayment", repaymentRoutes);
-app.use('/api/config', require('./routes/config.routes'));
+app.use('/api/config', require('./src/routes/config.routes'));
+
 
 
 app.get("/", (req, res) => {
