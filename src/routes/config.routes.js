@@ -15,6 +15,8 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // Update interest rate (weekly APR)
 router.patch('/interest-rate', authMiddleware, async (req, res) => {
+    const io = req.app.get('io'); // get the socket.io instance
+
   const { interestRate } = req.body;
   if (typeof interestRate !== 'number') {
     return res.status(400).json({ error: 'Interest rate must be a number' });
@@ -37,6 +39,14 @@ router.patch('/interest-rate', authMiddleware, async (req, res) => {
     type: 'interest-update',
     message,
   })));
+
+
+   borrowers.forEach((b) => {
+    io.to(b._id.toString()).emit('notification:new', {
+      message,
+      type: 'interest-update',
+    });
+  });
 
   res.json(config);
 });
