@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Config = require('../models/config.model');
 const Notification = require('../models/notification.model');
-const Borrower = require('../models/borrower.model');
+// const Borrower = require('../models/borrower.model');
+const User = require('../models/user.model');
 const authMiddleware = require('../utils/auth.middleware');
 
 // Get current config
@@ -27,7 +28,8 @@ router.patch('/interest-rate', authMiddleware, async (req, res) => {
 
   await config.save();
 
-  const borrowers = await Borrower.find({});
+  // const borrowers = await Borrower.find({});
+  const borrowers = await User.find({ role: 'borrower' });
   const message = `Interest rate has been updated to ${(interestRate * 100).toFixed(2)}% weekly. Please review your updated loan terms.`;
 
   await Notification.insertMany(borrowers.map(b => ({
