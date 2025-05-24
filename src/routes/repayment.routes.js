@@ -30,14 +30,30 @@ router.get("/my-repayments", authMiddleware, async (req, res) => {
 });
 
 router.patch('/repayment/:id/pay', authMiddleware, async (req, res) => {
+  const { paymentMethod } = req.body;
   const repayment = await Repayment.findById(req.params.id);
   if (!repayment) return res.status(404).json({ error: 'Not found' });
 
   repayment.status = 'paid';
-  await repayment.save();
+  repayment.paidAt = new Date();
+  repayment.paymentMethod = paymentMethod || 'other';
 
+  await repayment.save();
   res.json(repayment);
 });
+
+router.get("/loan/:loanId", authMiddleware, async (req, res) => {
+  try {
+    const repayments = await Repayment.find({ loanId: req.params.loanId }).sort({
+      dueDate: 1,
+    });
+    res.json(repayments);
+  } catch (error) {
+    console.error("Error fetching repayments:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 
 module.exports = router;
