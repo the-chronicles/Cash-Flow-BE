@@ -16,7 +16,7 @@ module.exports = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Attach the decoded user data to the request object
-    req.user = decoded;
+    // req.user = decoded;
     req.user = { _id: decoded.id }; // ✅ now req.user._id works
 
 
